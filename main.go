@@ -3,67 +3,21 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime"
+	"path/filepath"
 )
 
-type filesIndexType struct {
-	name  string
-	day   string
-	month string
-	year  string
-}
-
-func listFiles(dirPath string) ([]filesIndexType, error) {
-	reader, err := os.Open(dirPath)
-
-	if err != nil {
-		return nil, err
-	}
-
-	files, err := reader.Readdir(0)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var fileIndexArray []filesIndexType
-
-	for _, file := range files {
-		if !file.IsDir() {
-			fileIndex := filesIndexType{
-				name:  file.Name(),
-				day:   fmt.Sprint(file.ModTime().Day()),
-				month: file.ModTime().Month().String(),
-				year:  fmt.Sprint(file.ModTime().Year()),
-			}
-
-			fileIndexArray = append(fileIndexArray, fileIndex)
-		}
-	}
-
-	return fileIndexArray, nil
-}
-
-func createFolder(dirName string) error {
-	return os.Mkdir("./"+dirName, 0777)
-}
-
-func moveFile(sourcePath string, destinationPath string) error {
-	return os.Rename(sourcePath, destinationPath)
-}
-
-func getPathSeparator() string {
-	pathSeparator := "/"
-
-	if runtime.GOOS == "windows" {
-		pathSeparator = "\\"
-	}
-
-	return pathSeparator
-}
-
 func main() {
-	// listFiles("../../../../bin/../../mnt/c/Users/ferna")
+	fmt.Println(">>> Organizador de arquivos por data <<<")
+	fmt.Println("v1.0")
+	fmt.Println()
+
+	if len(os.Args) < 3 {
+		fmt.Println("Por favor, informe todos os argumentos:")
+		fmt.Println()
+		fmt.Println("Primeiro argumento -> Caminho da pasta a ser organizada")
+		fmt.Println("Segundo argumento -> Nível de organização: ano | mês | dia")
+		return
+	}
 
 	dirPath := os.Args[1]
 	sortBy := os.Args[2]
@@ -71,13 +25,56 @@ func main() {
 	fileIndexArray, err := listFiles(dirPath)
 
 	if err != nil {
+		fmt.Println("Erro ao listar os arquivos:")
 		fmt.Println(err.Error())
 		return
 	}
 
-	if sortBy == "year" {
+	if sortBy == "ano" {
 		for _, fileIndexItem := range fileIndexArray {
 			createFolder(fileIndexItem.year)
+			moveFile(
+				fileIndexItem.name,
+				filepath.Join(
+					fileIndexItem.year,
+					fileIndexItem.name,
+				),
+			)
 		}
+	} else if sortBy == "mês" {
+		for _, fileIndexItem := range fileIndexArray {
+			createFolder(filepath.Join(
+				fileIndexItem.year,
+				fileIndexItem.month,
+			))
+			moveFile(
+				fileIndexItem.name,
+				filepath.Join(
+					fileIndexItem.year,
+					fileIndexItem.month,
+					fileIndexItem.name,
+				),
+			)
+		}
+	} else if sortBy == "dia" {
+		for _, fileIndexItem := range fileIndexArray {
+			createFolder(filepath.Join(
+				fileIndexItem.year,
+				fileIndexItem.month,
+				fileIndexItem.day,
+			))
+			moveFile(
+				fileIndexItem.name,
+				filepath.Join(
+					fileIndexItem.year,
+					fileIndexItem.month,
+					fileIndexItem.day,
+					fileIndexItem.name,
+				),
+			)
+		}
+	} else {
+		fmt.Println("Por favor, informe uma das opções -> ano | mês | dia")
+		return
 	}
 }
