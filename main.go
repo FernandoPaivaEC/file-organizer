@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"time"
 )
 
 type filesIndexType struct {
-	name      string
-	createdAt time.Time
+	name  string
+	day   string
+	month string
+	year  string
 }
 
 func listFiles(dirPath string) ([]filesIndexType, error) {
@@ -30,8 +31,10 @@ func listFiles(dirPath string) ([]filesIndexType, error) {
 	for _, file := range files {
 		if !file.IsDir() {
 			fileIndex := filesIndexType{
-				name:      file.Name(),
-				createdAt: file.ModTime(),
+				name:  file.Name(),
+				day:   fmt.Sprint(file.ModTime().Day()),
+				month: file.ModTime().Month().String(),
+				year:  fmt.Sprint(file.ModTime().Year()),
 			}
 
 			fileIndexArray = append(fileIndexArray, fileIndex)
@@ -63,7 +66,7 @@ func main() {
 	// listFiles("../../../../bin/../../mnt/c/Users/ferna")
 
 	dirPath := os.Args[1]
-	// sortBy := os.Args[2]
+	sortBy := os.Args[2]
 
 	fileIndexArray, err := listFiles(dirPath)
 
@@ -72,5 +75,9 @@ func main() {
 		return
 	}
 
-	fmt.Println(fileIndexArray)
+	if sortBy == "year" {
+		for _, fileIndexItem := range fileIndexArray {
+			createFolder(fileIndexItem.year)
+		}
+	}
 }
