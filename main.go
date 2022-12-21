@@ -7,6 +7,8 @@ import (
 )
 
 func main() {
+	clearTerminal()
+
 	fmt.Println(">>> Organizador de arquivos por data <<<")
 	fmt.Println("v1.0")
 	fmt.Println()
@@ -22,7 +24,7 @@ func main() {
 	dirPath := os.Args[1]
 	sortBy := os.Args[2]
 
-	fileIndexArray, err := listFiles(dirPath)
+	fileIndex, err := listFiles(dirPath)
 
 	if err != nil {
 		fmt.Println("Erro ao listar os arquivos:")
@@ -31,45 +33,45 @@ func main() {
 	}
 
 	if sortBy == "ano" {
-		for _, fileIndexItem := range fileIndexArray {
-			createFolder(fileIndexItem.year)
+		for _, fileInfo := range fileIndex {
+			createFolder(fileInfo.lastModified.year)
 			moveFile(
-				fileIndexItem.name,
+				fileInfo.name,
 				filepath.Join(
-					fileIndexItem.year,
-					fileIndexItem.name,
+					fileInfo.lastModified.year,
+					fileInfo.name,
 				),
 			)
 		}
 	} else if sortBy == "mês" {
-		for _, fileIndexItem := range fileIndexArray {
+		for _, fileInfo := range fileIndex {
 			createFolder(filepath.Join(
-				fileIndexItem.year,
-				fileIndexItem.month,
+				fileInfo.lastModified.year,
+				fileInfo.lastModified.month,
 			))
 			moveFile(
-				fileIndexItem.name,
+				fileInfo.name,
 				filepath.Join(
-					fileIndexItem.year,
-					fileIndexItem.month,
-					fileIndexItem.name,
+					fileInfo.lastModified.year,
+					fileInfo.lastModified.month,
+					fileInfo.name,
 				),
 			)
 		}
 	} else if sortBy == "dia" {
-		for _, fileIndexItem := range fileIndexArray {
+		for _, fileInfo := range fileIndex {
 			createFolder(filepath.Join(
-				fileIndexItem.year,
-				fileIndexItem.month,
-				fileIndexItem.day,
+				fileInfo.lastModified.year,
+				fileInfo.lastModified.month,
+				fileInfo.lastModified.day,
 			))
 			moveFile(
-				fileIndexItem.name,
+				fileInfo.name,
 				filepath.Join(
-					fileIndexItem.year,
-					fileIndexItem.month,
-					fileIndexItem.day,
-					fileIndexItem.name,
+					fileInfo.lastModified.year,
+					fileInfo.lastModified.month,
+					fileInfo.lastModified.day,
+					fileInfo.name,
 				),
 			)
 		}

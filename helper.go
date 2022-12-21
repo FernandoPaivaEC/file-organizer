@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 )
 
 var months = [12]string{
@@ -20,7 +22,7 @@ var months = [12]string{
 	"Dezembro",
 }
 
-func listFiles(dirPath string) ([]fileIndexType, error) {
+func listFiles(dirPath string) (FileIndex, error) {
 	reader, err := os.Open(dirPath)
 
 	if err != nil {
@@ -33,22 +35,24 @@ func listFiles(dirPath string) ([]fileIndexType, error) {
 		return nil, err
 	}
 
-	var fileIndexArray []fileIndexType
+	var fileIndex FileIndex
 
 	for _, file := range files {
 		if !file.IsDir() {
-			fileIndexItem := fileIndexType{
-				name:  file.Name(),
-				day:   fmt.Sprint(file.ModTime().Day()),
-				month: months[file.ModTime().Month()-1],
-				year:  fmt.Sprint(file.ModTime().Year()),
+			fileInfo := FileInfo{
+				name: file.Name(),
+				lastModified: LastModified{
+					day:   fmt.Sprint(file.ModTime().Day()),
+					month: months[file.ModTime().Month()-1],
+					year:  fmt.Sprint(file.ModTime().Year()),
+				},
 			}
 
-			fileIndexArray = append(fileIndexArray, fileIndexItem)
+			fileIndex = append(fileIndex, fileInfo)
 		}
 	}
 
-	return fileIndexArray, nil
+	return fileIndex, nil
 }
 
 func createFolder(dirPath string) error {
@@ -57,4 +61,16 @@ func createFolder(dirPath string) error {
 
 func moveFile(sourcePath string, destinationPath string) error {
 	return os.Rename("./"+sourcePath, "./"+destinationPath)
+}
+
+func clearTerminal() {
+	clearCommand := "clear"
+
+	if runtime.GOOS == "windows" {
+		clearCommand = "cls"
+	}
+
+	command := exec.Command(clearCommand)
+	command.Stdout = os.Stdout
+	command.Run()
 }
