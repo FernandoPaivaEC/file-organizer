@@ -8,6 +8,7 @@ type LastModified struct {
 
 type FileInfo struct {
 	name         string
+	keyword      string
 	lastModified LastModified
 }
 
