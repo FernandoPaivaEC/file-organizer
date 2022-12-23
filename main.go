@@ -2,108 +2,86 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
+	"image/color"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 func main() {
-	clearTerminal()
+	application := app.New()
+	window := application.NewWindow("Organizador de Arquivos")
+	window.Resize(fyne.NewSize(800, 600))
 
-	fmt.Println("=== Organizador de arquivos por data v1.0 ===")
-	fmt.Println()
-
-	if len(os.Args) < 3 {
-		fmt.Println("Por favor, informe todos os argumentos:")
-		fmt.Println()
-		fmt.Println("Primeiro argumento -> Caminho da pasta a ser organizada")
-		fmt.Println("Segundo argumento -> Tipo de organização: ano | mês | dia | nome")
-		return
+	title := canvas.NewText("Como deseja organizar os arquivos?", color.White)
+	title.TextStyle = fyne.TextStyle{
+		Bold: true,
 	}
 
-	dirPath := os.Args[1]
-	sortBy := os.Args[2]
+	title.Alignment = fyne.TextAlignCenter
+	title.TextSize = 16
 
-	fileIndex, err := listFiles(dirPath)
+	textWidget := widget.NewLabel("Selecione a pasta")
+	textWidget.Alignment = fyne.TextAlignCenter
+	textWidget.Wrapping = fyne.TextWrapWord
 
-	if err != nil {
-		fmt.Println("Erro ao listar os arquivos:")
-		fmt.Println(err.Error())
-		return
-	}
+	button := widget.NewButton(
+		"Selecionar pasta",
+		func() {
+			dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+				if err != nil {
+					textWidget.Text = err.Error()
+				} else {
+					if uri != nil {
+						fmt.Println(uri.Path())
+						textWidget.Text = uri.Path()
+					}
+				}
 
-	if sortBy == "ano" {
-		for _, fileInfo := range fileIndex {
-			createFolder(fileInfo.lastModified.year)
-			moveFile(
-				fileInfo.name,
-				filepath.Join(
-					fileInfo.lastModified.year,
-					fileInfo.name,
-				),
-			)
-		}
-	} else if sortBy == "mês" {
-		for _, fileInfo := range fileIndex {
-			createFolder(filepath.Join(
-				fileInfo.lastModified.year,
-				fileInfo.lastModified.month,
-			))
-			moveFile(
-				fileInfo.name,
-				filepath.Join(
-					fileInfo.lastModified.year,
-					fileInfo.lastModified.month,
-					fileInfo.name,
-				),
-			)
-		}
-	} else if sortBy == "dia" {
-		for _, fileInfo := range fileIndex {
-			createFolder(filepath.Join(
-				fileInfo.lastModified.year,
-				fileInfo.lastModified.month,
-				fileInfo.lastModified.day,
-			))
-			moveFile(
-				fileInfo.name,
-				filepath.Join(
-					fileInfo.lastModified.year,
-					fileInfo.lastModified.month,
-					fileInfo.lastModified.day,
-					fileInfo.name,
-				),
-			)
-		}
-	} else if sortBy == "nome" {
-		for index, fileInfo := range fileIndex {
-			title := strings.ToUpper(strings.Split(fileInfo.name, "_")[0])
+				textWidget.Show()
+			}, window)
+		},
+	)
 
-			splittedTitle := strings.Split(title, " ")
+	radio := widget.NewRadioGroup(
+		[]string{
+			"Por nome",
+			"Por data",
+		},
+		func(value string) {
+			fmt.Println("Radio set to", value)
+		},
+	)
 
-			keyword := strings.ToUpper(splittedTitle[0])
+	buttonHBox := container.New(
+		layout.NewHBoxLayout(),
+		layout.NewSpacer(),
+		button,
+		layout.NewSpacer(),
+	)
 
-			fileIndex[index].keyword = keyword
-		}
+	radioHBox := container.New(
+		layout.NewHBoxLayout(),
+		layout.NewSpacer(),
+		radio,
+		layout.NewSpacer(),
+	)
 
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+	VBox := container.New(
+		layout.NewVBoxLayout(),
+		layout.NewSpacer(),
+		title,
+		radioHBox,
+		buttonHBox,
+		textWidget,
+		layout.NewSpacer(),
+	)
 
-		for _, fileInfo := range fileIndex {
-			createFolder(fileInfo.keyword)
-
-			oldPath := fileInfo.name
-			newPath := filepath.Join(fileInfo.keyword, fileInfo.name)
-
-			err := moveFile(oldPath, newPath)
-
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		}
-	} else {
-		fmt.Println("Por favor, informe uma das opções -> ano | mês | dia | nome")
-		return
-	}
+	window.SetContent(VBox)
+	window.ShowAndRun()
 }
